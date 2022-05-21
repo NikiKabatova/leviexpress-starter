@@ -15,14 +15,25 @@ const CityOptions = ({ cities }) => {
   );
 };
 
+const DatesOptions = ({ dates }) => {
+  return (
+    <>
+      <option value="">Vyberte</option>
+      {dates.map((date) => (
+        <option key={date.dateBasic} value={date.dateBasic}>
+          {date.dateCs}
+        </option>
+      ))}
+    </>
+  );
+};
+
 export const JourneyPicker = ({ onJourneyChange }) => {
   const [fromCity, setFromCity] = useState('');
   const [toCity, setToCity] = useState('');
   const [date, setDate] = useState('');
-  const [cities, setCities] = useState([
-    { name: 'Praha', code: 'CZ-PRG' },
-    { name: 'Brno', code: 'CZ-BRQ' },
-  ]);
+  const [cities, setCities] = useState([]);
+  const [dates, setDates] = useState([]);
 
   useEffect(() => {
     fetch('https://apps.kodim.cz/daweb/leviexpress/api/cities')
@@ -33,19 +44,22 @@ export const JourneyPicker = ({ onJourneyChange }) => {
   }, []);
 
   useEffect(() => {
-    fetch('https://apps.kodim.cz/daweb/leviexpress/api/cities')
+    fetch('https://apps.kodim.cz/daweb/leviexpress/api/dates')
       .then((response) => response.json())
       .then((data) => {
-        setDate(data.results);
+        setDates(data.results);
       });
   }, []);
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    console.log('Odesílám formulář s cestou');
-    console.log(fromCity);
-    console.log(toCity);
-    console.log(date);
+    fetch(
+      `https://apps.kodim.cz/daweb/leviexpress/api/journey?fromCity=${fromCity}&toCity=${toCity}&date=${date}`,
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        onJourneyChange(data.results);
+      });
   };
   return (
     <div className="journey-picker container">
@@ -67,16 +81,17 @@ export const JourneyPicker = ({ onJourneyChange }) => {
           <label>
             <div className="journey-picker__label">Datum:</div>
             <select onChange={(event) => setDate(event.target.value)}>
-              <option value="">Vyberte</option>
-              <option value="datum01">Datum 01</option>
-              <option value="datum02">Datum 02</option>
-              <option value="datum03">Datum 03</option>
-              <option value="datum04">Datum 04</option>
-              <option value="datum05">Datum 05</option>
+              <DatesOptions dates={dates} />
             </select>
           </label>
           <div className="journey-picker__controls">
-            <button className="btn" type="submit">
+            <button
+              className="btn"
+              type="submit"
+              disabled={
+                fromCity === '' || toCity === '' || date === '' ? true : false // můžu vymazat ? true : false a bude to fungovat stejne
+              }
+            >
               Vyhledat spoj
             </button>
           </div>
